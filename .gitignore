@@ -3,4 +3,5 @@ marmvel.rsf
 __pycache__
 modelCreation.py
 *.h5
+Session.vim
 
