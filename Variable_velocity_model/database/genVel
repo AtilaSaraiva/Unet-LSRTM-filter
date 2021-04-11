@@ -1,0 +1,15 @@
+#!/bin/bash
+
+machineName=$(hostname)
+
+case "$machineName" in
+    'JurosComposto')
+        DATAPATH=/home/atila/mnt/
+        scons
+        ;;
+    'marreca')
+        DATAPATH=/home/asqs/neuraldb/
+        scons -j 10
+        ;;
+esac
+DATAPATH=/var/tmp/

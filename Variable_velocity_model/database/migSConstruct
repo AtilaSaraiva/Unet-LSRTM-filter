@@ -1,0 +1,103 @@
+from rsf.proj import *
+
+import random
+import numpy as np
+import requests
+
+dimensions = (14,14)
+xmax = 5.0
+zmax = 3.0
+d = 0.0100 # non-round for reproducibility
+
+nz = int(zmax/d)
+nx = int(xmax/d)
+# print(nz,nx)
+
+jsrc = 34 # First shot location
+nshots = 40 # Number of shots
+incShots = round((nx - 2 * jsrc) / nshots) # Distance between shots
+print('jsrc',jsrc)
+print('nshots',nshots)
+print('incShots',incShots)
+
+databaseSize = 1000
+
+veldir = "Vel/"
+migdir = "Mig/"
+refldir = "Ref/"
+shotsdir = "Shots/"
+trash  = "trash/"
+
+for i in range(databaseSize):
+    count = str(i)
+
+
+
+    # Filename strings
+    layers_asc     = trash+'layers.asc'+count
+    layers_rsf     = trash+'layers'+count
+    refs           = trash+'refs'+count
+    dips           = trash+'dips'+count
+    campoVel       = veldir+'campoVel'+count
+    campoVelSmooth = veldir+'campoVelSmooth'+count
+    refletiv       = refldir+'refletiv'+count
+    seismicData    = shotsdir+'seismicData'+count
+    rtm            = migdir+'rtm'+count
+    rtmlap         = migdir+'rtmlap'+count
+    seismicDataMod = shotsdir+'seismicDataMod'+count
+    rtmMigMod      = migdir+'rtmMigMod'+count
+    rtmMigModlap   = migdir+'rtmMigModlap'+count
+
+
+    Flow(seismicData,
+        [campoVelSmooth, refletiv],
+        """../../../Born/mod incShots=%d incRec=0 nshots=%d
+        nr=%d isrc=0 jsrc=%d gxbeg=0 ref=${SOURCES[1]}
+        vel=${SOURCES[0]} data=${TARGETS[0]} """ %
+        (incShots, nshots, nx, jsrc),
+        stdout=0)
+
+    Flow(rtm,
+        [campoVelSmooth, seismicData],
+        '../../../RTM/rtm shots=${SOURCES[1]} vel=${SOURCES[0]} rtm=${TARGETS[0]} ',stdout=0)
+
+    Flow(rtmlap,rtm,"laplace")
+
+    Result(rtmlap, "grey gainpanel=a")
+
+    Flow(seismicDataMod,
+        [campoVelSmooth, rtmlap],
+        """../../../Born/mod incShots=%d incRec=0 nshots=%d
+        nr=%d isrc=0 jsrc=%d gxbeg=0 ref=${SOURCES[1]}
+        vel=${SOURCES[0]} data=${TARGETS[0]} """ %
+        (incShots, nshots, nx, jsrc),
+        stdout=0)
+
+    Flow(rtmMigMod,
+            [campoVelSmooth, seismicDataMod],
+            '../../../RTM/rtm shots=${SOURCES[1]} vel=${SOURCES[0]} rtm=${TARGETS[0]} ',stdout=0)
+
+    Flow(rtmMigModlap,rtmMigMod,"laplace")
+
+    Result(rtmMigModlap, "grey gainpanel=a")
+
+    jpg = './Fig/' + rtmlap + '.jpg'
+    vpl = './Fig/' + rtmlap + '.vpl'
+
+    Flow(jpg, vpl,
+        '''
+        $RSFROOT/bin/jpegpen format=jpg ${SOURCES[0]}
+        ''')
+
+    jpg = './Fig/' + rtmMigModlap + '.jpg'
+    vpl = './Fig/' + rtmMigModlap + '.vpl'
+
+    Flow(jpg, vpl,
+        '''
+        $RSFROOT/bin/jpegpen format=jpg ${SOURCES[0]}
+        ''')
+
+    if i % 100 == 0:
+        Flow("report"+count,rtmMigModlap,
+            """curl -m 2 https://api.telegram.org/bot1704021819:AAH7ZMGSTT8MuYtOFUBdtA4m1Na_InM3DkY/sendMessage?chat_id=171176503&text=iter%s""" %(i))
+End()

@@ -1,0 +1,201 @@
+from rsf.proj import *
+
+import random
+import numpy as np
+
+def constrained_sum_sample_pos(n,total):
+    """Return a randomly chosen list of n positive integers summing to a total. Each list is equally likely to occur."""
+    dividers = sorted(random.sample(range(1, total), n - 1))
+    # print(dividers)
+    # print(dividers + [total])
+    # for a, b in zip(dividers + [total], [0] + dividers):
+        # print(a, b)
+    return [a - b for a, b in zip(dividers + [total], [0] + dividers)]
+
+def randomList(nElem, numMin, numMax):
+    # randomList = []
+    # for i in range(nElem):
+        # randomList.append(random.uniform(numMin,numMax))
+    randomList = np.random.normal(loc=1/nElem,
+                                  scale=1/(3*nElem),
+                                  size=nElem)
+    randomList = np.cumsum(randomList)
+    randomList = (numMax - numMin) * randomList + numMin
+    randomList[randomList < numMin] = numMin
+    randomList[randomList > numMax] = numMax
+    return randomList
+
+def constrainedSumSampleFloat(n,total):
+    """Return a randomly chosen list of n positive integers summing to a total. Each list is equally likely to occur."""
+    # randomList = []
+    # for i in range(n - 1):
+        # randomList.append(random.uniform(0,total))
+    dividers = sorted(randomList(n - 1, 0, total))
+    return [a - b for a, b in zip(dividers + [total], [0] + dividers)]
+
+
+def test_constrainedSumSampleFloat(n,total):
+    for i in range(10000):
+        div = constrainedSumSampleFloat (n,total)
+        sumDiv = sum(div)
+        if sumDiv > 40.000001 and sumDiv < 39.999999:
+            print("Test of constrainedSumSampleFloat failed")
+
+def transposeNestedList(listArray):
+    return list(map(list, zip(*listArray)))
+
+def layerGenerator(dimensions, zmax):
+    layers = []
+    for i in range(dimensions[1]):
+        # col = constrainedSumSampleFloat(dimensions[0],zmax)
+        col = randomList(dimensions[0], 0, dimensions[0])
+        col *= zmax / dimensions[0]
+        layers.append(col)
+    return transposeNestedList(layers)
+
+def arr2str(array,sep=' '):
+    # return string.join(map(str,array),sep)
+    listOfStrings = [str(elem) for elem in array]
+    return sep.join(listOfStrings)
+
+def layer2str(layers,sep=' '):
+    layerStringArray = [arr2str(row) for row in layers]
+    return sep.join(layerStringArray)
+
+
+dimensions = (14,14)
+xmax = 5.0
+zmax = 3.0
+d = 0.0100 # non-round for reproducibility
+
+nz = int(zmax/d)
+nx = int(xmax/d)
+# print(nz,nx)
+
+jsrc = 34 # First shot location
+nshots = 40 # Number of shots
+incShots = round((nx - 2 * jsrc) / nshots) # Distance between shots
+print('jsrc',jsrc)
+print('nshots',nshots)
+print('incShots',incShots)
+
+databaseSize = 1000
+
+veldir = "Vel/"
+migdir = "Mig/"
+refldir = "Ref/"
+shotsdir = "Shots/"
+trash  = "trash/"
+
+for i in range(databaseSize):
+    count = str(i)
+    layers = layerGenerator(dimensions,zmax)
+    velocities = sorted(randomList(dimensions[0], 2.0, 4.0))
+
+    # for i in range(dimensions[0]):
+        # print(layers[i])
+
+    # print("---------------------")
+    # print(velocities)
+    vstr = arr2str(velocities,',')
+
+    # print(vstr)
+
+    n1 = len(layers[0])
+    n2 = len(layers)
+    # print(layer2str(layers, sep=' '))
+
+
+    # Filename strings
+    layers_asc     = trash+'layers.asc'+count
+    layers_rsf     = trash+'layers'+count
+    refs           = trash+'refs'+count
+    dips           = trash+'dips'+count
+    campoVel       = veldir+'campoVel'+count
+    campoVelSmooth = veldir+'campoVelSmooth'+count
+    refletiv       = refldir+'refletiv'+count
+    seismicData    = shotsdir+'seismicData'+count
+    rtm            = migdir+'rtm'+count
+    rtmlap         = migdir+'rtmlap'+count
+    seismicDataMod = shotsdir+'seismicDataMod'+count
+    rtmMigMod      = migdir+'rtmMigMod'+count
+    rtmMigModlap   = migdir+'rtmMigModlap'+count
+
+    Flow(layers_asc,None,
+         '''
+         echo %s
+         n1=%d n2=%d o1=0 d1=%g
+         data_format=ascii_float in=$TARGET
+         ''' % (layer2str(layers, sep=' '),
+                n1,n2,xmax/(n1-1)))
+
+    Flow(layers_rsf,layers_asc,'dd form=native')
+
+    Flow(refs,layers_rsf,
+         'spline o1=0 d1=%g n1=%d' % (d,nx))
+
+    Flow(dips,refs,'deriv scale=y')
+
+    Flow(campoVel,refs,
+         '''
+         unif2 d1=%g n1=%d n2=%d v00=%s
+         ''' % (d,nz,nx,vstr))
+
+    Flow(campoVelSmooth,campoVel,
+            '''
+            smooth rect1=3 rect2=3 repeat=14
+            ''')
+
+
+    Result(campoVel,
+           '''
+           grey color=j title="Model 1"
+           mean=y titlesz=8 labelsz=6
+           label1="Depth (km)"
+           label2="Distance (km)"
+           ''')
+
+    jpg = './Fig/' + veldir + 'campoVel' + count + '.jpg'
+    vpl = './Fig/' + veldir + 'campoVel' + count + '.vpl'
+
+    Flow(jpg, vpl,
+        '''
+        $RSFROOT/bin/jpegpen format=jpg ${SOURCES[0]}
+        ''')
+
+
+    Flow(refletiv,campoVel,'deriv')
+
+    # Flow(seismicData,
+        # [campoVelSmooth, refletiv],
+        # """../../../Born/mod incShots=%d incRec=0 nshots=%d
+        # nr=%d isrc=0 jsrc=%d gxbeg=0 ref=${SOURCES[1]}
+        # vel=${SOURCES[0]} data=${TARGETS[0]} """ %
+        # (incShots, nshots, nx, jsrc),
+        # stdout=0)
+
+    # Flow(rtm,
+        # [campoVelSmooth, seismicData],
+        # '../../../RTM/rtm shots=${SOURCES[1]} vel=${SOURCES[0]} rtm=${TARGETS[0]} ',stdout=0)
+
+    # Flow(rtmlap,rtm,"laplace")
+
+    # Result(rtmlap, "grey gainpanel=a")
+
+    # Flow(seismicDataMod,
+        # [campoVelSmooth, rtmlap],
+        # """../../../Born/mod incShots=%d incRec=0 nshots=%d
+        # nr=%d isrc=0 jsrc=%d gxbeg=0 ref=${SOURCES[1]}
+        # vel=${SOURCES[0]} data=${TARGETS[0]} """ %
+        # (incShots, nshots, nx, jsrc),
+        # stdout=0)
+
+    # Flow(rtmMigMod,
+            # [campoVelSmooth, seismicDataMod],
+            # '../../../RTM/rtm shots=${SOURCES[1]} vel=${SOURCES[0]} rtm=${TARGETS[0]} ',stdout=0)
+
+    # Flow(rtmMigModlap,rtmMigMod,"laplace")
+
+    # Result(rtmMigModlap, "grey gainpanel=a")
+
+End()
