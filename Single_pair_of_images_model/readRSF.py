@@ -30,7 +30,8 @@ def read_rsf (filename):
         nx = int(param["n2"])
         filename = str(param["in"])
         inputShape = (nz, nx)
-        fileArray = np.fromfile(filename, dtype=np.single).reshape(inputShape, order="F")
+        fileArray = np.fromfile(filename, dtype=np.single)
+        fileArray = fileArray[0:(nz*nx)].reshape(inputShape, order="F")
 
         return fileArray
 

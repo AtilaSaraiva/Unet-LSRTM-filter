@@ -1,6 +1,7 @@
 from keras.layers import Conv2D, MaxPooling2D, Dropout, concatenate, UpSampling2D
 from keras.optimizers import Adam
 from keras.models import *
+from keras.utils import plot_model
 
 def unet(pretrained_weights = None,input_size = (512,512,1)):
     inputs = Input(input_size)
@@ -10,8 +11,8 @@ def unet(pretrained_weights = None,input_size = (512,512,1)):
     conv2 = Conv2D(128, 3, activation = 'tanh', padding = 'same', kernel_initializer = 'he_normal')(pool1)
     conv2 = Conv2D(128, 3, activation = 'tanh', padding = 'same', kernel_initializer = 'he_normal')(conv2)
     pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
-    # conv3 = Conv2D(256, 3, activation = 'tanh', padding = 'same', kernel_initializer = 'he_normal')(pool2)
-    # conv3 = Conv2D(256, 3, activation = 'tanh', padding = 'same', kernel_initializer = 'he_normal')(conv3)
+    conv3 = Conv2D(256, 3, activation = 'tanh', padding = 'same', kernel_initializer = 'he_normal')(pool2)
+    conv3 = Conv2D(256, 3, activation = 'tanh', padding = 'same', kernel_initializer = 'he_normal')(conv3)
     # pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
     # conv4 = Conv2D(512, 3, activation = 'tanh', padding = 'same', kernel_initializer = 'he_normal')(pool3)
     # conv4 = Conv2D(512, 3, activation = 'tanh', padding = 'same', kernel_initializer = 'he_normal')(conv4)
@@ -32,7 +33,7 @@ def unet(pretrained_weights = None,input_size = (512,512,1)):
     # conv7 = Conv2D(256, 3, activation = 'tanh', padding = 'same', kernel_initializer = 'he_normal')(merge7)
     # conv7 = Conv2D(256, 3, activation = 'tanh', padding = 'same', kernel_initializer = 'he_normal')(conv7)
 
-    up8 = Conv2D(128, 2, activation = 'tanh', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(pool2))
+    up8 = Conv2D(128, 2, activation = 'tanh', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(conv3))
     merge8 = concatenate([conv2,up8], axis = 3)
     conv8 = Conv2D(128, 3, activation = 'tanh', padding = 'same', kernel_initializer = 'he_normal')(merge8)
     conv8 = Conv2D(128, 3, activation = 'tanh', padding = 'same', kernel_initializer = 'he_normal')(conv8)
@@ -51,6 +52,7 @@ def unet(pretrained_weights = None,input_size = (512,512,1)):
             metrics = ['mean_squared_error'])
 
     #model.summary()
+    plot_model(model, to_file='model.png')
 
     if(pretrained_weights):
         model.load_weights(pretrained_weights)
@@ -167,3 +169,7 @@ def unet2(pretrained_weights = None,input_size = (512,512,1)):
         model.load_weights(pretrained_weights)
 
     return model
+
+if __name__ == "__main__":
+    model = unet()
+    plot_model(model, to_file='model.png')

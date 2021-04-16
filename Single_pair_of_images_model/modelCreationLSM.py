@@ -26,25 +26,24 @@ remigratedImgReshape = cropArraytoDataset(block, remigratedImg)
 # model = unet(input_size = (*block,1))
 # dataset = (remigratedImgReshape, migratedImgReshape)
 
-# scaleModel = StandardScaler()
-scaleModel = RobustScaler()
-scaleModel.fit(remigratedImg)
-norm_remigratedImg = scaleModel.transform(remigratedImg)
+# inputScaleModel = StandardScaler()
+inputScaleModel = RobustScaler()
+inputScaleModel.fit(remigratedImg)
+norm_remigratedImg = inputScaleModel.transform(remigratedImg)
 
-scaleModel2 = RobustScaler()
-scaleModel2.fit(migratedImg)
-migratedImg = scaleModel2.transform(migratedImg)
+outputScaleModel = RobustScaler()
+outputScaleModel.fit(migratedImg)
+norm_migratedImg = outputScaleModel.transform(migratedImg)
 
 inputShape = (256,256)
 
 norm_remigratedImg = norm_remigratedImg.reshape(1,*inputShape,1)
-migratedImg        = migratedImg.reshape(1,*inputShape,1)
+norm_migratedImg        = norm_migratedImg.reshape(1,*inputShape,1)
 
-dataset = (norm_remigratedImg, migratedImg)
+dataset = (norm_remigratedImg, norm_migratedImg)
 
 model = unet(input_size = (*inputShape,1))
 history = model.fit(*dataset, epochs=30)
-
 
 print(history.history.keys())
 # summarize history for loss
@@ -66,10 +65,13 @@ print("Saved model weights to disk.")
 model.save("unet.h5")
 print("Saved model to disk.")
 
-with open("scaleModel.bin","wb+") as arq:
-    objectBinaryDump = dumps(scaleModel)
+with open("inputScaleModel.bin","wb+") as arq:
+    objectBinaryDump = dumps(inputScaleModel)
     arq.write(objectBinaryDump)
 
+with open("outputScaleModel.bin","wb+") as arq:
+    objectBinaryDump = dumps(outputScaleModel)
+    arq.write(objectBinaryDump)
 
 # plt.imshow(dataset[0])
 # plt.colorbar()

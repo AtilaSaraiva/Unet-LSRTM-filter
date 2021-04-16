@@ -4,4 +4,6 @@ __pycache__
 modelCreation.py
 *.h5
 Session.vim
-
+*.pdf
+*.vpl
+*.jpg
