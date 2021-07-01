@@ -8,16 +8,15 @@ from readRSF import *
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from pickle import dumps, loads
 
-# with open("inputScaleModel.bin","rb+") as arq:
-    # objectBinaryDump = arq.read()
-    # scaleModel = loads(objectBinaryDump)
+with open("inputScaleModel.bin","rb+") as arq:
+    objectBinaryDump = arq.read()
+    remigScaleModel = loads(objectBinaryDump)
 
 with open("outputScaleModel.bin","rb+") as arq:
     objectBinaryDump = arq.read()
-    scaleModel = loads(objectBinaryDump)
+    migScaleModel = loads(objectBinaryDump)
 
 model = load_model("weights/unet.h5")
-# block = (64,64)
 
 # Reading migrated Image
 file_migratedImg = "madagascarBuild/rtmlap.rsf"
@@ -39,61 +38,113 @@ file_velocityField = "madagascarBuild/marmSmooth.rsf"
 velocityField = read_rsf(file_velocityField)
 velocityField = velocityField [30:286,30:286]
 
-
-# plt.imshow(curvFiltImg, cmap='gray')
-# plt.show()
-
-inputShape = (256,256)
-norm_migratedImg = scaleModel.transform(migratedImg)
-norm_migratedImg = norm_migratedImg.reshape(1,*inputShape,1)
-prediction = model.predict(norm_migratedImg)
-prediction[0,:,:,0] = scaleModel.inverse_transform(prediction[0,:,:,0])
-
-
-vmax = migratedImg.max()
-vmin = migratedImg.min()
-
-
-
-## Comparison image
+# Test to see if the input data are being read correctly
 fig, axes = plt.subplots(2,2)
-im1 = axes[0,0].imshow(prediction[0,:,:,0], cmap='gray')#, vmin=vmin, vmax=vmax)
-axes[1,0].imshow(migratedImg, cmap='gray')
-# axes[0,1].imshow(norm_migratedImg[0,:,:,0])
-axes[0,1].imshow(curvFiltImg, cmap='gray')
-axes[1,1].imshow(remigratedImg, cmap='gray')
-
-axes[0,0].title.set_text("Imagem MQ predita pela Unet")
-axes[0,1].title.set_text("Imagem MQ com filtro curvelet")
-axes[1,0].title.set_text("Imagem migrada RTM")
-axes[1,1].title.set_text("Imagem remigrada RTM")
-# cbaxes = fig.add_axes([0.1, 0.1, 0.03, 0.8])
-# plt.colorbar(im1, cax=cbaxes)
-
-plt.savefig('generalcomparison.pdf', bbox_inches='tight')
-# plt.show()
+axes[0,0].imshow(migratedImg, cmap='gray')
+axes[0,0].title.set_text("Imagem migrada")
+axes[0,1].imshow(remigratedImg, cmap='gray')
+axes[0,1].title.set_text("Imagem remigrada")
+axes[1,0].imshow(curvFiltImg, cmap='gray')
+axes[1,0].title.set_text("Imagem filtrada com curvelet")
+axes[1,1].imshow(velocityField, cmap='gray')
+axes[1,1].title.set_text("Camp vel")
 
 
-
-## Data plot
-fig, axes = plt.subplots(1,3)
-axes[0].imshow(velocityField, cmap='jet')
-axes[0].title.set_text("Velocity Field")
-axes[1].imshow(migratedImg, cmap='gray')
-axes[1].title.set_text("$\mathbf{m}_0 = \mathbf{L}^\mathrm{T} \mathbf{d}_{obs}$")
-axes[2].imshow(remigratedImg, cmap='gray')
-axes[2].title.set_text("$\mathbf{m}_1 = (\mathbf{L}^\mathrm{T}\mathbf{L})\mathbf{L}^\mathrm{T} \mathbf{d}_{obs}$")
-plt.savefig('inputdata.pdf', bbox_inches='tight')
-plt.show()
+# Normalization of the image and reshape
+inputShape = (256,256)
+norm_migratedImg = migScaleModel.transform(migratedImg)
+norm_migratedImg = norm_migratedImg.reshape(1,*inputShape,1)
 
 
-## Result plot
+# Test to see if the normalization algorithm is working
 fig, axes = plt.subplots(1,3)
 axes[0].imshow(migratedImg, cmap='gray')
-axes[0].title.set_text("$\mathbf{m}_0 = \mathbf{L}^\mathrm{T} \mathbf{d}_{obs}$")
-axes[1].imshow(curvFiltImg, cmap='gray')
-axes[1].title.set_text("Curvelet $\mathbf{m}_{LQ} = \mathbf{F}\, \mathbf{m}_0$")
-axes[2].imshow(prediction[0,:,:,0], cmap='gray')
-axes[2].title.set_text("Unet $\mathbf{m}_{LQ} = \mathrm{Unet}(\mathbf{m}_0$)")
-plt.savefig('results.pdf', bbox_inches='tight')
+axes[0].title.set_text("Imagem migrada")
+axes[1].imshow(norm_migratedImg[0,:,:,0], cmap='gray')
+axes[1].title.set_text("Imagem migrada normalizada")
+axes[2].imshow(
+        migScaleModel.inverse_transform(norm_migratedImg[0,:,:,0])
+        , cmap='gray')
+axes[2].title.set_text("Imagem migrada recuperada com o modelo de normalização")
+
+
+# Testing integrity of the neural network model
+norm_remigratedImg = remigScaleModel.transform(remigratedImg)
+norm_remigratedImg = norm_remigratedImg.reshape(1,*inputShape,1)
+norm_migradaRecovered = model.predict(norm_remigratedImg)
+migradaRecovered = migScaleModel.inverse_transform(norm_migradaRecovered[0,:,:,0])
+
+fig, axes = plt.subplots(1,3)
+axes[0].imshow(norm_migratedImg[0,:,:,0],cmap='gray')
+axes[0].title.set_text("Mig Img Norm")
+axes[1].imshow(norm_remigratedImg[0,:,:,0],cmap='gray')
+axes[1].title.set_text("Remig Img Norm")
+axes[2].imshow(norm_migradaRecovered[0,:,:,0],cmap='gray')
+axes[2].title.set_text("Mig Img recovered")
+
 plt.show()
+
+
+
+
+
+
+# LSMig = model.predict(norm_migratedImg)
+# LSMig[0,:,:,0] = migScaleModel.inverse_transform(LSMig[0,:,:,0])
+
+
+
+
+
+
+
+# vmax = migratedImg.max()
+# vmin = migratedImg.min()
+
+
+
+# ## Comparison image
+# fig, axes = plt.subplots(2,2)
+# im1 = axes[0,0].imshow(prediction[0,:,:,0], cmap='gray')#, vmin=vmin, vmax=vmax)
+# axes[1,0].imshow(migratedImg, cmap='gray')
+# # axes[0,1].imshow(norm_migratedImg[0,:,:,0])
+# axes[0,1].imshow(curvFiltImg, cmap='gray')
+# axes[1,1].imshow(remigratedImg, cmap='gray')
+
+# axes[0,0].title.set_text("Imagem MQ predita pela Unet")
+# axes[0,1].title.set_text("Imagem MQ com filtro curvelet")
+# axes[1,0].title.set_text("Imagem migrada RTM")
+# axes[1,1].title.set_text("Imagem remigrada RTM")
+# # cbaxes = fig.add_axes([0.1, 0.1, 0.03, 0.8])
+# # plt.colorbar(im1, cax=cbaxes)
+
+# plt.savefig('generalcomparison.pdf', bbox_inches='tight')
+# # plt.show()
+
+
+
+# ## Data plot
+# fig, axes = plt.subplots(1,3)
+# axes[0].imshow(velocityField, cmap='jet')
+# axes[0].title.set_text("Velocity Field")
+# axes[1].imshow(migratedImg, cmap='gray')
+# axes[1].title.set_text("$\mathbf{m}_0 = \mathbf{L}^\mathrm{T} \mathbf{d}_{obs}$")
+# axes[2].imshow(remigratedImg, cmap='gray')
+# axes[2].title.set_text("$\mathbf{m}_1 = (\mathbf{L}^\mathrm{T}\mathbf{L})\mathbf{L}^\mathrm{T} \mathbf{d}_{obs}$")
+# plt.savefig('inputdata.pdf', bbox_inches='tight')
+# plt.show()
+
+
+# ## Result plot
+# fig, axes = plt.subplots(1,3)
+# axes[0].imshow(migratedImg, cmap='gray')
+# axes[0].title.set_text("$\mathbf{m}_0 = \mathbf{L}^\mathrm{T} \mathbf{d}_{obs}$")
+# axes[1].imshow(curvFiltImg, cmap='gray')
+# axes[1].title.set_text("Curvelet $\mathbf{m}_{LQ} = \mathbf{F}\, \mathbf{m}_0$")
+# axes[2].imshow(prediction[0,:,:,0], cmap='gray')
+# axes[2].title.set_text("Unet $\mathbf{m}_{LQ} = \mathrm{Unet}(\mathbf{m}_0$)")
+# plt.savefig('results.pdf', bbox_inches='tight')
+# plt.show()
+
+# axes[0].imshow(,cmap='gray')
+# axes[0].title.set_text("")
