@@ -11,17 +11,19 @@ from pickle import dumps, loads
 
 block = (64,64)
 
-# Reading the migrated image ( m1 = Ltd )
-file_migratedImg = "madagascarBuild/rtmlap.rsf"
-migratedImg = read_rsf(file_migratedImg)
-migratedImg = migratedImg[30:286,30:286]
-# migratedImgReshape = cropArraytoDataset(block, migratedImg)
+migratedImg = np.zeros((2000,256,256,3))
+remigratedImg = np.zeros((2000,256,256,3))
 
-# Reading the remigrated image ( m2 = LtLm )
-file_remigratedImg = "madagascarBuild/rtmMigModlap.rsf"
-remigratedImg = read_rsf(file_remigratedImg)
-remigratedImg = remigratedImg[30:286,30:286]
-# remigratedImgReshape = cropArraytoDataset(block, remigratedImg)
+for i in range(1000):
+    # Reading the migrated image ( m1 = Ltd )
+    file_migratedImg = "database/Mig/rtmlap{i}.rsf"
+    migratedImgAux = read_rsf(file_migratedImg)
+    migratedImg[ = migratedImgAux[30:286,30:286]
+
+    # Reading the remigrated image ( m2 = LtLm )
+    file_remigratedImg = "database/Mig/rtmMigModlap{i}.rsf"
+    remigratedImg = read_rsf(file_remigratedImg)
+    remigratedImg = remigratedImg[30:286,30:286]
 
 # model = unet(input_size = (*block,1))
 # dataset = (remigratedImgReshape, migratedImgReshape)
@@ -58,11 +60,11 @@ plt.show()
 
 
 # serialize weights to HDF5
-model.save_weights("unet_weights.h5")
+model.save_weights("weights/unet_weights.h5")
 print("Saved model weights to disk.")
 
 # Save entire model (HDF5)
-model.save("unet.h5")
+model.save("weights/unet.h5")
 print("Saved model to disk.")
 
 with open("inputScaleModel.bin","wb+") as arq:

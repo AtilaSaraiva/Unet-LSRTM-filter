@@ -49,19 +49,19 @@ def indexConversion(idx, block, grid, velReshaped, vel):
     except:
         pass
 
-# def cropArraytoDataset(block, fileArray):
-    # """This function takes in a array of a given shape and divide it into blocks, reformating
-    # the input array into a tensorflow dataset in which the blocks represent the data. The format of the output array will be of (number of blocks, shape of the block, number of channels)"""
-    # grid = (fileArray.shape[0] // block[0],
-            # fileArray.shape[1] // block[1])
-    # numberOfBlocks = grid[0] * grid[1]
+def cropArraytoDataset(block, fileArray):
+    """This function takes in a array of a given shape and divide it into blocks, reformating
+    the input array into a tensorflow dataset in which the blocks represent the data. The format of the output array will be of (number of blocks, shape of the block, number of channels)"""
+    grid = (fileArray.shape[0] // block[0],
+            fileArray.shape[1] // block[1])
+    numberOfBlocks = grid[0] * grid[1]
 
-    # fileArrayReshaped = np.empty((numberOfBlocks, *block, 1))
-    # for i in range(fileArray.shape[0]):
-        # for j in range(fileArray.shape[1]):
-            # indexConversion((i,j), block, grid, fileArrayReshaped, fileArray)
+    fileArrayReshaped = np.empty((numberOfBlocks, *block, 1))
+    for i in range(fileArray.shape[0]):
+        for j in range(fileArray.shape[1]):
+            indexConversion((i,j), block, grid, fileArrayReshaped, fileArray)
 
-    # return fileArrayReshaped
+    return fileArrayReshaped
 
 
 

@@ -28,7 +28,7 @@ refldir = "Ref/"
 shotsdir = "Shots/"
 trash  = "trash/"
 
-for i in range(databaseSize):
+for i in range(917,databaseSize):
     count = str(i)
 
 

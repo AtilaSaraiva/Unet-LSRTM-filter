@@ -1,4 +1,4 @@
-3.1-git	rtm	projects/unetfilter/madagascarBuild:	asqs@marreca	Wed Mar 31 12:48:10 2021
+3.1-git	rtm	unetfilter/Single_pair_of_images_model/madagascarBuild:	asqs@marreca	Mon Jun 21 15:24:21 2021
 
 	d2=1
 	n2=368
@@ -9,6 +9,6 @@
 	data_format="native_float"
 	o3=0
 	esize=4
-	in="/home/asqs/tmp/projects/unetfilter/madagascarBuild/rtm.rsf@"
+	in="/home/asqs/tmp/unetfilter/Single_pair_of_images_model/madagascarBuild/rtm.rsf@"
 	d1=1
 	n1=375

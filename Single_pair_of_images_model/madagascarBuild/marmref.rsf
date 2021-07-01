@@ -9,9 +9,9 @@ label2=Offset
 title="Marmousi velocity (m/s)"
 data_format="native_float"
 esize=4
-in="../../../marmo-vel"
-3.1-git	sfderiv	projects/unetfilter/madagascarBuild:	asqs@marreca	Wed Mar 31 12:35:54 2021
+in="marmo-vel"
+3.1-git	sfderiv	unetfilter/Single_pair_of_images_model/madagascarBuild:	asqs@marreca	Mon Jun 21 15:13:00 2021
 
 	data_format="native_float"
 	esize=4
-	in="/home/asqs/tmp/projects/unetfilter/madagascarBuild/marmref.rsf@"
+	in="/home/asqs/tmp/unetfilter/Single_pair_of_images_model/madagascarBuild/marmref.rsf@"

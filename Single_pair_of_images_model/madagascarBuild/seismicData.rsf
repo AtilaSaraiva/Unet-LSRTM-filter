@@ -1,4 +1,4 @@
-3.1-git	mod	projects/unetfilter/madagascarBuild:	asqs@marreca	Wed Mar 31 12:36:04 2021
+3.1-git	mod	unetfilter/Single_pair_of_images_model/madagascarBuild:	asqs@marreca	Mon Jun 21 15:13:10 2021
 
 	d2=25
 	n2=368
@@ -10,7 +10,7 @@
 	o3=0
 	esize=4
 	gxbeg=0
-	in="/home/asqs/tmp/projects/unetfilter/madagascarBuild/seismicData.rsf@"
+	in="/home/asqs/tmp/unetfilter/Single_pair_of_images_model/madagascarBuild/seismicData.rsf@"
 	incRec=0
 	sxbeg=34
 	incShots=8
