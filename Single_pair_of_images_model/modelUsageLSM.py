@@ -8,15 +8,15 @@ from readRSF import *
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from pickle import dumps, loads
 
-with open("inputScaleModel.bin","rb+") as arq:
+with open("objects/remigScaleModel.bin","rb+") as arq:
     objectBinaryDump = arq.read()
     remigScaleModel = loads(objectBinaryDump)
 
-with open("outputScaleModel.bin","rb+") as arq:
+with open("objects/migScaleModel.bin","rb+") as arq:
     objectBinaryDump = arq.read()
     migScaleModel = loads(objectBinaryDump)
 
-model = load_model("weights/unet.h5")
+model = load_model("weights/unet_lr_0.0001_epoch_100.h5")
 
 # Reading migrated Image
 file_migratedImg = "madagascarBuild/rtmlap.rsf"
@@ -85,7 +85,21 @@ axes[2].title.set_text("Mig Img recovered")
 plt.show()
 
 
+prediction = model.predict(norm_migratedImg)
+prediction = prediction[0,:,:,0]
 
+fig,axes = plt.subplots(1,2)
+
+axes[0].imshow(norm_migratedImg[0,:,:,0],cmap='gray')
+axes[0].title.set_text("Imagem remigrada")
+axes[1].imshow(prediction,cmap='gray')
+axes[1].title.set_text("Imagem predita")
+
+plt.show()
+
+
+
+#=============================================================================#
 
 
 
@@ -123,28 +137,28 @@ plt.show()
 
 
 
-# ## Data plot
-# fig, axes = plt.subplots(1,3)
-# axes[0].imshow(velocityField, cmap='jet')
-# axes[0].title.set_text("Velocity Field")
-# axes[1].imshow(migratedImg, cmap='gray')
-# axes[1].title.set_text("$\mathbf{m}_0 = \mathbf{L}^\mathrm{T} \mathbf{d}_{obs}$")
-# axes[2].imshow(remigratedImg, cmap='gray')
-# axes[2].title.set_text("$\mathbf{m}_1 = (\mathbf{L}^\mathrm{T}\mathbf{L})\mathbf{L}^\mathrm{T} \mathbf{d}_{obs}$")
-# plt.savefig('inputdata.pdf', bbox_inches='tight')
-# plt.show()
+## Data plot
+fig, axes = plt.subplots(1,3)
+axes[0].imshow(velocityField, cmap='jet')
+axes[0].title.set_text("Velocity Field")
+axes[1].imshow(migratedImg, cmap='gray')
+axes[1].title.set_text("$\mathbf{m}_0 = \mathbf{L}^\mathrm{T} \mathbf{d}_{obs}$")
+axes[2].imshow(remigratedImg, cmap='gray')
+axes[2].title.set_text("$\mathbf{m}_1 = (\mathbf{L}^\mathrm{T}\mathbf{L})\mathbf{L}^\mathrm{T} \mathbf{d}_{obs}$")
+plt.savefig('inputdata.pdf', bbox_inches='tight')
+plt.show()
 
 
-# ## Result plot
-# fig, axes = plt.subplots(1,3)
-# axes[0].imshow(migratedImg, cmap='gray')
-# axes[0].title.set_text("$\mathbf{m}_0 = \mathbf{L}^\mathrm{T} \mathbf{d}_{obs}$")
-# axes[1].imshow(curvFiltImg, cmap='gray')
-# axes[1].title.set_text("Curvelet $\mathbf{m}_{LQ} = \mathbf{F}\, \mathbf{m}_0$")
-# axes[2].imshow(prediction[0,:,:,0], cmap='gray')
-# axes[2].title.set_text("Unet $\mathbf{m}_{LQ} = \mathrm{Unet}(\mathbf{m}_0$)")
-# plt.savefig('results.pdf', bbox_inches='tight')
-# plt.show()
+## Result plot
+fig, axes = plt.subplots(1,3)
+axes[0].imshow(migratedImg, cmap='gray')
+axes[0].title.set_text("$\mathbf{m}_0 = \mathbf{L}^\mathrm{T} \mathbf{d}_{obs}$")
+axes[1].imshow(curvFiltImg, cmap='gray')
+axes[1].title.set_text("Curvelet $\mathbf{m}_{LQ} = \mathbf{F}\, \mathbf{m}_0$")
+axes[2].imshow(prediction[0,:,:,0], cmap='gray')
+axes[2].title.set_text("Unet $\mathbf{m}_{LQ} = \mathrm{Unet}(\mathbf{m}_0$)")
+plt.savefig('results.pdf', bbox_inches='tight')
+plt.show()
 
 # axes[0].imshow(,cmap='gray')
 # axes[0].title.set_text("")

@@ -115,7 +115,7 @@ def unet1(pretrained_weights = None,input_size = (512,512,1)):
 
     return model
 
-def unet(pretrained_weights = None,input_size = (512,512,1)):
+def unet(pretrained_weights = None,input_size = (512,512,1),learningRate=0.5e-4):
     inputs = Input(input_size)
     conv1 = Conv2D(64, 3, activation = 'tanh', padding = 'same', kernel_initializer = 'he_normal')(inputs)
     conv1 = Conv2D(64, 3, activation = 'tanh', padding = 'same', kernel_initializer = 'he_normal')(conv1)
@@ -162,7 +162,7 @@ def unet(pretrained_weights = None,input_size = (512,512,1)):
     model = Model(inputs = inputs, outputs = conv10)
 
     # model.compile(optimizer = Adam(lr = 1e-4), loss = 'mean_squared_error', metrics = ['mean_squared_error'])
-    model.compile(optimizer = Adam(learning_rate = 0.5e-4),
+    model.compile(optimizer = Adam(learning_rate = learningRate),
             loss = 'mean_squared_error',
             metrics = ['mean_squared_error'])
 
@@ -172,6 +172,9 @@ def unet(pretrained_weights = None,input_size = (512,512,1)):
         model.load_weights(pretrained_weights)
 
     return model
+
+
+
 
 if __name__ == "__main__":
     model = unet()
